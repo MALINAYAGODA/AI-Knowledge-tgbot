@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Указываем путь к Dockerfile
+    container_name: telegram-bot
+    environment:
+      - DB_HOST=postgres  # Сервис базы данных
+      - DB_PORT=5440  # Порт базы данных
+      - DB_NAME=postgres  # Имя базы данных
+      - DB_USER=postgres  # Имя пользователя
+      - DB_PASSWORD=postgres  # Пароль для пользователя
+    depends_on:
+      - postgres  # Зависимость от PostgreSQL
+    restart: always
+    networks:
+      - bot_network
+    entrypoint: >
+      sh -c "python main.py"  # Запускаем основной скрипт
+
+  # Сервис для PostgreSQL базы данных
+  postgres:
+    image: postgres:13  # Используем официальный образ PostgreSQL версии 13
+    container_name: postgres-db
+    environment:
+      - POSTGRES_DB=postgres  # Имя базы данных
+      - POSTGRES_USER=postgres  # Имя пользователя
+      - POSTGRES_PASSWORD=postgres  # Пароль для пользователя
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Монтируем volume для хранения данных
+    ports:
+      - "5440:5440"  # Прокси порт 5440
+    networks:
+      - bot_network
+    restart: always
+
+# Определение volume для хранения данных базы
+volumes:
+  postgres_data:
+
+# Определение сети
+networks:
+  bot_network:
+    driver: bridge
